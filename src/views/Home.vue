@@ -17,6 +17,8 @@
         </v-flex>
       </v-layout>
     </v-layout>
+
+    <portal-target name="modal"></portal-target>
   </v-container>
 </template>
 
@@ -25,7 +27,7 @@ import NavBar from "../components/NavBar"
 
 export default {
   components: {
-    NavBar
+    NavBar,
   }
 };
 </script>

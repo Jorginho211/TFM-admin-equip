@@ -27,7 +27,7 @@ export default new Router({
         {
           path: 'users',
           name: 'users',
-          component: () => import('./views/Users.vue')
+          component: () => import('./views/Users.vue'),
         },
         {
           path: 'equipments',
@@ -38,6 +38,11 @@ export default new Router({
           path: 'places',
           name: 'places',
           component: () => import('./views/Places.vue')
+        },
+        {
+          path: '/users/:id',
+          name: 'user',
+          component: () => import('./views/User.vue')
         }
       ]
     },
