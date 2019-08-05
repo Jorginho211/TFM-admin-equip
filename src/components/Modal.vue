@@ -49,7 +49,7 @@ export default {
   .card {
     position: relative;
     width: 800px;
-    height: 500px;
+    height: 550px;
     left: calc(50% - 400px);
     top: calc(50% - 30%);
   }
