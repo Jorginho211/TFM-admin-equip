@@ -11,6 +11,17 @@ export const HTTP = axios.create({
 export const HTTP_CODES = {
     Ok: 200,
     NotFound: 404,
-    Unhauthorized: 401,
+    Unauthorized: 401,
     CreateOrEdit: 201 
+}
+
+export const Unauthorized = (router, status) => {
+  if(status === HTTP_CODES.Unauthorized){
+    localStorage.removeItem("token");
+    router.replace({name: "login"});
+    
+    return true;
+  }
+
+  return false;
 }

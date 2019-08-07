@@ -61,7 +61,7 @@
               <v-layout row mb-4>
                 <v-flex>
                   <v-text-field
-                    v-model="user.username"
+                    v-model="user.authentication.username"
                     label="Nome de usuario"
                     solo
                     hide-details
@@ -72,7 +72,7 @@
               </v-layout>
               <v-layout row mb-4>
                 <v-text-field
-                  v-model="user.password"
+                  v-model="user.authentication.password"
                   label="Contrasinal"
                   :type="showPassword ? 'text' : 'password'"
                   :append-icon="showPassword ? 'visibility' : 'visibility_off'"
@@ -126,11 +126,16 @@
 <script>
 import Content from "../components/Content.vue";
 import Modal from "../components/Modal.vue";
+import { mapState, mapMutations } from "vuex";
+import { HTTP, Unauthorized } from "../http-common.js";
 
 export default {
   components: {
     Content,
     Modal
+  },
+  computed: {
+    ...mapState(["users"])
   },
   data() {
     return {
@@ -143,10 +148,12 @@ export default {
       user: {
         name: "",
         lastname: "",
-        username: "",
-        password: "",
         frequencySendData: 5,
-        isAdmin: false
+        isAdmin: false,
+        authentication: {
+          username: "",
+          password: ""
+        }
       },
 
       headers: [
@@ -158,84 +165,58 @@ export default {
         { text: "Apelidos", value: "lastname" },
         { text: "Administrador", value: "isAdmin", align: "center" },
         { text: "Accións", value: "action", sortable: false, align: "end" }
-      ],
-      users: [
-        {
-          id: 6,
-          name: "admin",
-          lastname: "admin",
-          isAdmin: true,
-          uuid: "cde77ff0-ad5f-11e9-b1de-4102069e53c0",
-          frequencySendData: 5,
-          authentication: {
-            username: "jorge.lopez"
-          }
-        },
-        {
-          id: 20,
-          name: "Jorge",
-          lastname: "Lopez",
-          isAdmin: true,
-          uuid: "03f77f70-ad63-11e9-be91-21a8f11653b7",
-          frequencySendData: 5,
-          authentication: {
-            username: "jorge.lopez"
-          }
-        },
-        {
-          id: 24,
-          name: "test",
-          lastname: "test",
-          isAdmin: false,
-          uuid: "b2a4e7b0-ad63-11e9-be01-217812bf7e51",
-          frequencySendData: 20,
-          authentication: {
-            username: "jorge.lopez"
-          }
-        },
-        {
-          id: 32,
-          name: "Jorge",
-          lastname: "Lopez",
-          isAdmin: true,
-          uuid: "e35e0b80-afba-11e9-b3fd-09eedf8b53b3",
-          frequencySendData: 5,
-          authentication: {
-            username: "jorge.lopez"
-          }
-        }
       ]
     };
   },
   methods: {
-    remove(user) {
-      console.log(user);
-    },
-    edit(user) {
-      this.user.id = user.id;
-      this.user.name = user.name;
-      this.user.lastname = user.lastname;
-      this.user.username = user.authentication.username;
-      this.user.password = "";
-      this.user.frequencySendData = user.frequencySendData/60;
-
-      if(this.user.frequencySendData <= 0 || !Number.isInteger(this.user.frequencySendData)){
-        this.unit = "Segundos";
-        this.user.frequencySendData = user.frequencySendData;
+    ...mapMutations(["removeUser", "addOrEditUser"]),
+    async remove(user) {
+      try {
+        await HTTP.delete(`/api/v1/user/${user.id}`);
+        this.removeUser(user.id);
+      } catch (error) {
+        if(Unauthorized(this.$router, error.response.status)) return;
       }
+    },
+    async edit(user) {
+      try {
+        let response = await HTTP.get(`/api/v1/user/${user.id}`);
 
-      this.user.isAdmin = user.isAdmin;
-      this.modalTitle = "Editar Usuario";
-      this.modal = true;
+        user = response.data;
+        this.user.id = user.id;
+        this.user.name = user.name;
+        this.user.lastname = user.lastname;
+        this.user.authentication = {
+          username: user.authentication.username,
+          password: ""
+        };
+        this.user.isAdmin = user.isAdmin;
+        this.user.frequencySendData = user.frequencySendData;
+
+        this.unit = Number.isInteger(this.user.frequencySendData / 60)
+          ? "Minutos"
+          : "Segundos";
+        if (this.unit === "Minutos") {
+          this.user.frequencySendData = this.user.frequencySendData / 60;
+        }
+
+        this.modalTitle = "Editar Usuario";
+        this.modal = true;
+      } catch (error) {
+        if (Unauthorized(this.$router, error.response.status)) return;
+      }
     },
     monitor(user) {
       this.$router.push({ name: "user", params: { id: user.id } });
     },
     add() {
+      this.user.id = undefined;
       this.user.name = "";
       this.user.lastname = "";
-      this.user.username = "";
-      this.user.password = "";
+      this.user.authentication = {
+        username: "",
+        password: ""
+      };
       this.user.frequencySendData = 5;
       this.user.isAdmin = false;
       this.unit = "Minutos";
@@ -243,12 +224,40 @@ export default {
       this.modalTitle = "Engadir Usuario";
       this.modal = true;
     },
-    completeAdd() {
-      if (this.$refs.form.validate()) {
-        this.modal = false;
+    async completeAdd() {
+      if (!this.$refs.form.validate()) {
+        return;
       }
 
-      this.user.frequencySendData = this.unit === "Minutes" ? this.frequencySendData * 60 : this.frequencySendData;
+      let frequencySendData =
+        this.unit === "Minutos"
+          ? this.user.frequencySendData * 60
+          : this.user.frequencySendData;
+
+      try {
+        let response;
+        if (Number.isInteger(this.user.id)) {
+          this.user.authentication.password = this.user.authentication.password === "" ? undefined : this.user.authentication.password;
+          response = await HTTP.put(`/api/v1/user/${this.user.id}`, {
+            ...this.user,
+            frequencySendData: frequencySendData
+          });
+        } else {
+          response = await HTTP.post(`/api/v1/user/`, {
+            ...this.user,
+            frequencySendData: frequencySendData
+          });
+        }
+
+        this.user.id = response.data.id;
+        this.user.authentication = undefined;
+        this.modal = false;
+        this.user.frequencySendData = frequencySendData;
+        this.addOrEditUser(this.user);
+      } catch (error) {
+        if (Unauthorized(error.response.status)) return;
+        return;
+      }
     }
   }
 };

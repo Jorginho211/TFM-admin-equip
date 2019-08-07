@@ -3,17 +3,15 @@
     <v-layout column>
       <v-toolbar color="primary">
         <v-toolbar-title>
-          <div class="title">
-            Equip
-          </div> 
+          <div class="title">Equip</div>
         </v-toolbar-title>
       </v-toolbar>
 
       <v-layout fill-height>
-        <NavBar />
+        <NavBar/>
 
         <v-flex>
-            <router-view />
+          <router-view/>
         </v-flex>
       </v-layout>
     </v-layout>
@@ -23,19 +21,31 @@
 </template>
 
 <script>
-import NavBar from "../components/NavBar"
+import NavBar from "../components/NavBar";
+import { Unauthorized} from "../http-common";
+import { mapActions } from "vuex";
 
 export default {
+  created() {
+    let promises = [this.getUsers(), this.getEquipments(), this.getPlaces()];
+
+    Promise.all(promises).catch(status => {
+      if(Unauthorized(this.$router, status)) return;
+    });
+  },
   components: {
-    NavBar,
+    NavBar
+  },
+  methods: {
+    ...mapActions(["getUsers", "getEquipments", "getPlaces"])
   }
 };
 </script>
 
 <style lang="scss" scoped>
-  @import '../plugins/_variables.scss';
+@import "../plugins/_variables.scss";
 
-  .title {
-    color: $accent;
-  }
+.title {
+  color: $accent;
+}
 </style>
