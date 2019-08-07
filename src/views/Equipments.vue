@@ -79,11 +79,16 @@
 <script>
 import Content from "../components/Content.vue";
 import Modal from "../components/Modal.vue";
+import {HTTP, Unauthorized } from  "../http-common.js";
+import { mapState, mapMutations } from "vuex";
 
 export default {
   components: {
     Content,
     Modal
+  },
+  computed: {
+    ...mapState(['equipments'])
   },
   data() {
     return {
@@ -104,25 +109,21 @@ export default {
           value: "name"
         },
         { text: "Accións", value: "action", sortable: false, align: "end" }
-      ],
-      equipments: [
-        {
-          id: 2,
-          major: 1,
-          minor: 1,
-          name: "Chaleco"
-        },
-        {
-          id: 3,
-          major: 1,
-          minor: 2,
-          name: "Casco"
-        }
       ]
     };
   },
   methods: {
+    ...mapMutations(["removeEquipment", "addOrEditEquipment"]),
+    async remove(equipment) {
+      try {
+        await HTTP.delete(`/api/v1/equipment/${equipment.id}`);
+        this.removeEquipment(equipment.id);
+      } catch (error) {
+        if(Unauthorized(this.$router, error.response.status)) return;
+      }
+    },
     add() {
+      this.equipment.id = undefined;
       this.equipment.name = "";
       this.equipment.major = 1;
       this.equipment.minor = 0;
@@ -155,19 +156,29 @@ export default {
       this.modalTitle = "Editar Equipamento";
       this.modal = true;
     },
-    completeAdd() {
+    async completeAdd() {
       if (this.$refs.form.validate()) {
         this.modal = false;
       }
 
-      let equipment = this.equipments.find(eq => eq.id === this.equipment.id);
-      if(equipment !== undefined){
-        equipment.name = this.equipment.name;
-        equipment.minor = this.equipment.minor;
-      }
-      else {
-        this.equipment.id = 10;
-        this.equipments.push({...this.equipment});
+      try {
+        let response;
+        if (Number.isInteger(this.equipment.id)) {
+          response = await HTTP.put(`/api/v1/equipment/${this.equipment.id}`, {
+            ...this.equipment,
+          });
+        } else {
+          response = await HTTP.post(`/api/v1/equipment/`, {
+            ...this.equipment,
+          });
+        }
+
+        this.equipment.id = response.data.id;
+        this.modal = false;;
+        this.addOrEditEquipment(this.equipment);
+      } catch (error) {
+        if (Unauthorized(error.response.status)) return;
+        return;
       }
     }
   }

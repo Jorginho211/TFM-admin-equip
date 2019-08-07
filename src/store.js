@@ -36,13 +36,27 @@ export default new Vuex.Store({
       }
 
       state.users = state.users.slice();
-    }
+    },
+    removeEquipment(state, idEquipment) {
+      state.equipments = state.equipments.filter((eq) => eq.id !== idEquipment);
+    },
+    addOrEditEquipment(state, equipment){
+      let eqAux = state.equipments.find((eq) => eq.id === equipment.id);
+      if(eqAux !== undefined){
+        eqAux.name = equipment.name;
+        eqAux.major = equipment.major;
+        eqAux.minor = equipment.minor;
+      }
+      else {
+        state.equipments.push(equipment);
+      }
+
+      state.equipments = state.equipments.slice();
+    },
   },
   actions: {
     getUsers(context){
-      console.log("qqqq")
       return new Promise((resolve, reject) => {
-        console.log(HTTP.headers);
         HTTP.get('/api/v1/user/')
           .then((response) => {
             if(response.status === HTTP_CODES.Ok){
