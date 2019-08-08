@@ -73,8 +73,9 @@
                         solo
                         hide-details
                         @change="blueprintSelected"
+                        v-model="blueprintFile"
                         accept="image/*"
-                        :rules="[v => !vv || '']"
+                        :rules="[v => v.size > 0 || '']"
                         required
                       ></v-file-input>
                     </v-flex>
@@ -171,11 +172,17 @@
 <script>
 import Content from "../components/Content.vue";
 import Modal from "../components/Modal.vue";
+import { HTTP, Unauthorized } from "../http-common";
+import { dataURLtoFile, fileToDataURL} from "../utils"
+import { mapState, mapMutations } from "vuex";
 
 export default {
   components: {
     Content,
     Modal
+  },
+  computed: {
+    ...mapState(['users', 'places', 'equipments'])
   },
   data() {
     return {
@@ -183,6 +190,8 @@ export default {
       modal: false,
       modalTitle: "",
       step: 1,
+      validForm: true,
+      blueprintFile: undefined,
 
       placeIdentifiers: [],
       place: {
@@ -202,86 +211,15 @@ export default {
         },
         { text: "Accións", value: "action", sortable: false, align: "end" }
       ],
-      places: [
-        {
-          id: 8,
-          major: 1,
-          minor: 1,
-          name: "Sala de montaxe"
-        },
-        {
-          id: 9,
-          major: 1,
-          minor: 2,
-          name: "Sala de maquinas"
-        }
-      ],
-      users: [
-        {
-          id: 6,
-          name: "admin",
-          lastname: "admin",
-          isAdmin: true,
-          uuid: "cde77ff0-ad5f-11e9-b1de-4102069e53c0",
-          frequencySendData: 5,
-          authentication: {
-            username: "jorge.lopez"
-          }
-        },
-        {
-          id: 20,
-          name: "Jorge",
-          lastname: "Lopez",
-          isAdmin: true,
-          uuid: "03f77f70-ad63-11e9-be91-21a8f11653b7",
-          frequencySendData: 5,
-          authentication: {
-            username: "jorge.lopez"
-          }
-        },
-        {
-          id: 24,
-          name: "test",
-          lastname: "test",
-          isAdmin: false,
-          uuid: "b2a4e7b0-ad63-11e9-be01-217812bf7e51",
-          frequencySendData: 20,
-          authentication: {
-            username: "jorge.lopez"
-          }
-        },
-        {
-          id: 32,
-          name: "Jorge",
-          lastname: "Lopez",
-          isAdmin: true,
-          uuid: "e35e0b80-afba-11e9-b3fd-09eedf8b53b3",
-          frequencySendData: 5,
-          authentication: {
-            username: "jorge.lopez"
-          }
-        }
-      ],
-      equipments: [
-        {
-          id: 2,
-          major: 1,
-          minor: 1,
-          name: "Chaleco"
-        },
-        {
-          id: 3,
-          major: 1,
-          minor: 2,
-          name: "Casco"
-        }
-      ]
     };
   },
   methods: {
+    ...mapMutations(['addOrEditPlace', 'removePlace']),
     add() {
       this.modalTitle = "Engadir Area";
+      this.place.id = undefined;
       this.place.name = "";
+      this.place.major = 1;
       this.place.minor = 0;
       this.place.blueprint = "";
       this.place.equipments = [];
@@ -300,9 +238,9 @@ export default {
       this.step = 1;
       this.modal = true;
     },
-    next() {
-      if (this.step <= 2) {
-        if(!this.$refs.form.validate() || this.place.blueprint === ""){
+    async next() {
+      if (this.step < 2) {
+        if(!this.$refs.form.validate()){
           return;
         }
         
@@ -310,21 +248,48 @@ export default {
         return;
       }
 
-      this.places.push({ ...this.place });
+      let body = {
+        name: this.place.name,
+        major: this.place.major,
+        minor: this.place.minor,
+        blueprint: this.place.blueprint
+      }
+
+      try {
+        let response;
+        if(this.place.id !== undefined){
+          response = await HTTP.put(`/api/v1/place/${this.place.id}`, body);
+        }
+        else {
+          response = await HTTP.post(`/api/v1/place/`, body);
+        }
+
+        this.place.id = response.data.id;
+
+        let asociateEquipmentsRequest = HTTP.post(`/api/v1/place/${this.place.id}/equipments`, this.place.equipments);
+        let asociateUsersRequest = HTTP.post(`/api/v1/place/${this.place.id}/users`, this.place.users);
+
+        response = await asociateEquipmentsRequest;
+        response = await asociateUsersRequest;
+      }
+      catch(error){
+        if(Unauthorized(this.$router, error.response.status)) return;
+      }
+
+      this.place.equipments = undefined;
+      this.place.users = undefined;
+      this.place.blueprint = undefined;
       this.modal = false;
+      this.addOrEditPlace(this.place);
     },
     blueprintSelected(file) {
-      var reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = function() {
-        this.place.blueprint = reader.result;
-      }.bind(this);
+      fileToDataURL(file).then((dataURL) => this.place.blueprint = dataURL);
     },
-    edit(place) {
-      
+    async edit(place) {
       this.placeIdentifiers = [...Array(65536).keys()];
       for (let p of this.places) {
         if(place === p){
+          console.log(p.minor);
           continue;
         }
 
@@ -335,13 +300,34 @@ export default {
       }
       this.placeIdentifiers.splice(0, 1);
 
-      this.place = place;
+      try {
+        let placeRequest = HTTP.get(`/api/v1/place/${place.id}`);
+        let asociateEquipmentsRequest = HTTP.get(`/api/v1/place/${place.id}/equipments`);
+        let asociateUsersRequest = HTTP.get(`/api/v1/place/${place.id}/users`);
+
+        let response = await placeRequest;
+        this.place = response.data;
+        this.blueprintFile = dataURLtoFile(this.place.blueprint, 'blueprint');
+        response = await asociateEquipmentsRequest;
+        this.place.equipments = response.data;
+        response = await asociateUsersRequest;
+        this.place.users = response.data;
+      }
+      catch(error) {
+        if(Unauthorized(this.$router, error.response.status)) return;
+      }      
+
       this.step = 1;
       this.modalTitle = "Editar area";
       this.modal = true;
     },
-    remove(item) {
-
+    async remove(place) {
+      try {
+        await HTTP.delete(`/api/v1/place/${place.id}`);
+        this.removePlace(place.id);
+      } catch (error) {
+        if(Unauthorized(this.$router, error.response.status)) return;
+      }
     }
   }
 };

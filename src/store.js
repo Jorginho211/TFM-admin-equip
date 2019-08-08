@@ -53,6 +53,22 @@ export default new Vuex.Store({
 
       state.equipments = state.equipments.slice();
     },
+    addOrEditPlace(state, place){
+      let placeAux = state.places.find((p) => p.id === p.id);
+      if(placeAux !== undefined){
+        placeAux.name = place.name;
+        placeAux.major = place.major;
+        placeAux.minor = place.minor;
+      }
+      else {
+        state.places.push(place);
+      }
+
+      state.equipments = state.equipments.slice();
+    },
+    removePlace(state, idPlace){
+      state.places = state.places.filter((p) => p.id !== idPlace);
+    }
   },
   actions: {
     getUsers(context){

@@ -174,7 +174,7 @@ export default {
         }
 
         this.equipment.id = response.data.id;
-        this.modal = false;;
+        this.modal = false;
         this.addOrEditEquipment(this.equipment);
       } catch (error) {
         if (Unauthorized(error.response.status)) return;
