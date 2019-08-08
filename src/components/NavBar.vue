@@ -39,7 +39,7 @@
 
       <v-divider></v-divider>
 
-      <v-list-item link to="login" active-class="item item--active" class="pa-2 ma-0"> 
+      <v-list-item @click="logout()" active-class="item item--active" class="pa-2 ma-0"> 
         <v-list-item-icon>
           <v-icon class="icon">exit_to_app</v-icon>
         </v-list-item-icon>
@@ -57,7 +57,12 @@
 
 <script>
 export default {
-  
+  methods: {
+    logout() {
+      localStorage.removeItem('token');
+      this.$router.replace({name: 'login'});
+    }
+  }  
 }
 </script>
 
