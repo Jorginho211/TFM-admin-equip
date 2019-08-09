@@ -3,7 +3,7 @@
     <v-list dense nav class="pa-0">
       <v-divider></v-divider>
 
-      <v-list-item link to="users" active-class="item item--active" class="pa-2 ma-0">
+      <v-list-item link :to="{name: 'users'}" active-class="item item--active" class="pa-2 ma-0">
         <v-list-item-icon>
           <v-icon class="icon">accessibility</v-icon>
         </v-list-item-icon>
@@ -15,7 +15,7 @@
 
       <v-divider></v-divider>
 
-      <v-list-item link to="equipments" active-class="item item--active" class="pa-2 ma-0">
+      <v-list-item link :to="{name: 'equipments'}" active-class="item item--active" class="pa-2 ma-0">
         <v-list-item-icon>
           <v-icon class="icon">headset</v-icon>
         </v-list-item-icon>
@@ -27,7 +27,7 @@
 
       <v-divider></v-divider>
 
-      <v-list-item  link to="places" active-class="item item--active" class="pa-2 ma-0">
+      <v-list-item  link :to="{name: 'places'}" active-class="item item--active" class="pa-2 ma-0">
         <v-list-item-icon>
           <v-icon class="icon">place</v-icon>
         </v-list-item-icon>
