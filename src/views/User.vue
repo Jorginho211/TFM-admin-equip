@@ -1,18 +1,5 @@
 <template>
   <Content goBackEnabled :title="title">
-    <v-layout justify-end mt-5 mr-10>
-      <v-flex xs12 sm6 md4>
-        <v-text-field
-          v-model="searchTable"
-          append-icon="search"
-          label="Search"
-          single-line
-          hide-details
-          solo
-        ></v-text-field>
-      </v-flex>
-    </v-layout>
-
     <v-data-table
       :headers="this.headers"
       :items="this.userMonitorDatas"
@@ -38,7 +25,7 @@
                   class="place__name"
                   v-if="userMonitorData.place !== undefined"
                 >{{userMonitorData.place.name}}</h2>
-                <h2 v-else class="place__name place__name--no-area">Sin datos de area</h2>
+                <h2 v-else class="place__name place__name--no-area">Non hai datos da area</h2>
                 <figure class="blueprint">
                   <img
                     v-if="userMonitorData.place !== undefined"
@@ -51,7 +38,7 @@
                 <h2
                   class="no_equipments"
                   v-if="userMonitorData.equipments.length === 0"
-                >Sin datos de equipamento</h2>
+                >Non hai datos de equipamento</h2>
                 <ul class="equipments__list" v-if="userMonitorData.equipments.length > 0">
                   <li
                     class="equipments__item"
