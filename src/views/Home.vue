@@ -3,6 +3,7 @@
     <v-layout column>
       <v-toolbar color="primary">
         <v-toolbar-title>
+          <img style="width:42px;" :src="logo">
           <div class="title">Equip</div>
         </v-toolbar-title>
       </v-toolbar>
@@ -36,6 +37,11 @@ export default {
   components: {
     NavBar
   },
+  data() {
+    return {
+      logo: require('../assets/equip-logo-blue.png'),
+    }
+  },
   methods: {
     ...mapActions(["getUsers", "getEquipments", "getPlaces"])
   }
@@ -47,5 +53,8 @@ export default {
 
 .title {
   color: $accent;
+  display: inline-block;
+  margin-left: 10px;
+  vertical-align: text-bottom;
 }
 </style>

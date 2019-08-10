@@ -2,6 +2,9 @@
   <v-container fluid fill-height align-center class="bg_container">
     <v-card width="500" class="mx-auto pa-5">
       <v-layout column>
+        <v-flex pb-5 text-center>
+          <img style="width:125px;" :src="logo">
+        </v-flex>
         <v-alert v-if="loginError" dense outlined type="error">Usuario ou contrasinal incorrectos</v-alert>
         <v-form ref="form" @keyup.native.enter="login()">
           <v-flex mb-5>
@@ -44,6 +47,7 @@ import { HTTP, Unauthorized } from "../http-common.js";
 export default {
   data() {
     return {
+      logo: require('../assets/equip-logo-blue.png'),
       username: "",
       password: "",
       showPassword: false,
