@@ -54,7 +54,7 @@ export default new Vuex.Store({
       state.equipments = state.equipments.slice();
     },
     addOrEditPlace(state, place){
-      let placeAux = state.places.find((p) => p.id === p.id);
+      let placeAux = state.places.find((p) => p.id === place.id);
       if(placeAux !== undefined){
         placeAux.name = place.name;
         placeAux.major = place.major;
@@ -64,7 +64,7 @@ export default new Vuex.Store({
         state.places.push(place);
       }
 
-      state.equipments = state.equipments.slice();
+      state.places = state.places.slice();
     },
     removePlace(state, idPlace){
       state.places = state.places.filter((p) => p.id !== idPlace);
