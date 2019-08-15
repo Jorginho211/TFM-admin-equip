@@ -96,7 +96,7 @@
                       <v-autocomplete
                         v-model="place.users"
                         :items="users"
-                        item-value="id"
+                        :item-value="item => item"
                         :item-text="item => item.name + ' ' + item.lastname"
                         cache-items
                         hide-no-data
@@ -126,7 +126,7 @@
                       <v-autocomplete
                         v-model="place.equipments"
                         :items="equipments"
-                        item-value="id"
+                        :item-value="item => item"
                         :item-text="item => item.name"
                         cache-items
                         hide-no-data
@@ -266,9 +266,8 @@ export default {
 
         this.place.id = response.data.id;
 
-        let asociateEquipmentsRequest = HTTP.post(`/api/v1/place/${this.place.id}/equipments`, this.place.equipments);
-        let asociateUsersRequest = HTTP.post(`/api/v1/place/${this.place.id}/users`, this.place.users);
-
+        let asociateEquipmentsRequest = HTTP.post(`/api/v1/place/${this.place.id}/equipments`, this.place.equipments.map(e => e.id));
+        let asociateUsersRequest = HTTP.post(`/api/v1/place/${this.place.id}/users`, this.place.users.map(u => u.id));
         response = await asociateEquipmentsRequest;
         response = await asociateUsersRequest;
       }
