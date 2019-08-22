@@ -5,7 +5,7 @@
         <v-text-field
           v-model="searchTable"
           append-icon="search"
-          label="Search"
+          label="Busca"
           single-line
           hide-details
           solo
@@ -13,7 +13,14 @@
       </v-flex>
     </v-layout>
 
-    <v-data-table :headers="this.headers" :items="this.users" class="ma-5" :search="searchTable">
+    <v-data-table
+      :headers="this.headers"
+      :items="this.users"
+      class="ma-5"
+      :search="searchTable"
+      items-per-page="8"
+      :footer-props="{'items-per-page-options': [8]}"
+    >
       <template v-slot:item.isAdmin="{ item }">
         <v-icon v-if="item.isAdmin" color="success">check_circle</v-icon>
         <v-icon v-else color="error">cancel</v-icon>
@@ -175,7 +182,7 @@ export default {
         await HTTP.delete(`/api/v1/user/${user.id}`);
         this.removeUser(user.id);
       } catch (error) {
-        if(Unauthorized(this.$router, error.response.status)) return;
+        if (Unauthorized(this.$router, error.response.status)) return;
       }
     },
     async edit(user) {
@@ -237,7 +244,10 @@ export default {
       try {
         let response;
         if (Number.isInteger(this.user.id)) {
-          this.user.authentication.password = this.user.authentication.password === "" ? undefined : this.user.authentication.password;
+          this.user.authentication.password =
+            this.user.authentication.password === ""
+              ? undefined
+              : this.user.authentication.password;
           response = await HTTP.put(`/api/v1/user/${this.user.id}`, {
             ...this.user,
             frequencySendData: frequencySendData

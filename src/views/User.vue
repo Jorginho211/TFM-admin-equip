@@ -4,6 +4,8 @@
       :headers="this.headers"
       :items="this.userMonitorDatas"
       class="ma-5"
+      items-per-page="8"
+      :footer-props="{'items-per-page-options': [8]}"
       :search="searchTable"
     >
       <template v-slot:item.date="{ item }">{{getDateFromUnixTimestamp(item.date)}}</template>

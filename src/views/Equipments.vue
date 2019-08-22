@@ -5,7 +5,7 @@
         <v-text-field
           v-model="searchTable"
           append-icon="search"
-          label="Search"
+          label="Busca"
           single-line
           hide-details
           solo
@@ -18,6 +18,8 @@
       :items="this.equipments"
       class="ma-5"
       :search="searchTable"
+      items-per-page="8"
+      :footer-props="{'items-per-page-options': [8]}"
     >
       <template v-slot:item.isAdmin="{ item }">
         <v-icon v-if="item.isAdmin" color="success">check_circle</v-icon>
